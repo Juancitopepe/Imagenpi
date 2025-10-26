@@ -1,27 +1,30 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>Visualizador de dígitos de π</title>
+  <meta charset="UTF-8">
+  <title>Dígitos de π</title>
   <style>
     body {
-      background:black;
-      color:white;
-      font-family:monospace;
-      text-align:center;
-      margin:0;
-      padding:10px;
+      margin: 0;
+      background-color: black;
+      color: white;
+      font-family: monospace;
+      text-align: center;
+    }
+    #info {
+      font-size: 20px;
+      margin: 10px 0;
     }
     canvas {
-      display:block;
-      margin:0 auto;
-      background:black;
+      display: block;
+      margin: 0 auto;
+      background: black;
     }
   </style>
 </head>
 <body>
-  <h2 id="contador">Dígitos: 0</h2>
-  <canvas id="piCanvas" width="1000" height="1000"></canvas>
+  <div id="info">Dígitos: 0</div>
+  <canvas id="canvas" width="1000" height="1000"></canvas>
   <script src="decimal.min.js"></script>
   <script src="script.js"></script>
 </body>
