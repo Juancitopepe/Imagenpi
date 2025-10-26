@@ -1,47 +1,65 @@
-const WIDTH = 1000, HEIGHT = 1000, PIXELS = WIDTH * HEIGHT;
-const ANIMATION_TIME = 5000, PAUSE_TIME = 2000;
+// Espera asíncrona
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
-const colorMap = {
-  '0':'#ff0000','1':'#00ff00','2':'#0000ff','3':'#100000','4':'#001000',
-  '5':'#000010','6':'#050000','7':'#000500','8':'#000005','9':'#000000'
+const info = document.getElementById("info");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const size = 1000;
+const totalPixels = size * size;
+
+const colors = {
+  0: "#ff0000",
+  1: "#00ff00",
+  2: "#0000ff",
+  3: "#100000",
+  4: "#001000",
+  5: "#000010",
+  6: "#050000",
+  7: "#000500",
+  8: "#000005",
+  9: "#000000"
 };
 
-const canvas=document.getElementById("piCanvas");
-const ctx=canvas.getContext("2d");
-const contador=document.getElementById("contador");
+const worker = new Worker("piWorker.js");
+let digitsBuffer = "";
+let totalDigits = 0;
 
-let worker=new Worker("piWorker.js");
-let total=0, next=null;
-worker.onmessage=e=>next=e.data;
+worker.onmessage = async (e) => {
+  digitsBuffer = e.data;
+  totalDigits += digitsBuffer.length;
+  await animateDigits(digitsBuffer);
+  await sleep(2000); // pausa 2s
+  worker.postMessage("next");
+};
 
-(async function run(){
-  worker.postMessage(PIXELS);
-  while(true){
-    while(!next) await sleep(100);
-    const digits=next; next=null;
-    worker.postMessage(PIXELS);
-    total+=digits.length;
-    contador.textContent=`Dígitos: ${total.toLocaleString()}`;
-    await draw(digits);
-    await sleep(PAUSE_TIME);
-  }
-})();
+async function animateDigits(digits) {
+  const imgData = ctx.createImageData(size, size);
+  const data = imgData.data;
+  const pixelsPerFrame = totalPixels / (5 * 60); // 5s ~60fps
 
-async function draw(digits){
-  const img=ctx.createImageData(WIDTH,HEIGHT);
-  const step=Math.ceil(digits.length/(ANIMATION_TIME/16));
-  for(let i=0;i<digits.length;i+=step){
-    for(let j=0;j<step&&i+j<digits.length;j++){
-      const d=digits[i+j],c=hexToRgb(colorMap[d]);
-      const p=(i+j)*4;
-      img.data[p]=c.r;img.data[p+1]=c.g;img.data[p+2]=c.b;img.data[p+3]=255;
+  for (let i = 0; i < digits.length; i++) {
+    const color = colors[digits[i]];
+    const pixelIndex = i * 4;
+    const r = parseInt(color.substring(1, 3), 16);
+    const g = parseInt(color.substring(3, 5), 16);
+    const b = parseInt(color.substring(5, 7), 16);
+
+    data[pixelIndex] = r;
+    data[pixelIndex + 1] = g;
+    data[pixelIndex + 2] = b;
+    data[pixelIndex + 3] = 255;
+
+    if (i % pixelsPerFrame === 0) {
+      ctx.putImageData(imgData, 0, 0);
+      await sleep(1000 / 60);
+      info.textContent = `Dígitos: ${totalDigits - digits.length + i}`;
     }
-    ctx.putImageData(img,0,0);
-    await new Promise(r=>requestAnimationFrame(r));
   }
+
+  ctx.putImageData(imgData, 0, 0);
+  info.textContent = `Dígitos: ${totalDigits}`;
 }
-function hexToRgb(hex){
-  const v=parseInt(hex.slice(1),16);
-  return{r:(v>>16)&255,g:(v>>8)&255,b:v&255};
-}
-const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+worker.postMessage("start");
