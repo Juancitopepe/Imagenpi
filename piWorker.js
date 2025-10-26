@@ -4,7 +4,7 @@ self.importScripts("decimal.min.js");
 
 const { Decimal } = self.Decimal || self; // compatibilidad
 
-Decimal.set({ precision: 1050000 });
+Decimal.({ precision: 1050000 });
 
 function calcPi(nDigits) {
   const C = new Decimal(426880).times(new Decimal(10005).sqrt());
